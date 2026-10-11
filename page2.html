@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生信息录入 - 校园知识网络</title>
+    <link rel="stylesheet" href="/web/style.css">
+</head>
+
+<body>
+    <center>
+        <h1>校园知识网络</h1>
+        <h2>学生信息录入</h2>
+
+        <hr>
+
+        <form id="studentForm">
+            <p>
+                <label for="studentName">姓名：</label>
+                <input
+                    type="text"
+                    id="studentName"
+                    name="name"
+                    placeholder="请输入姓名"
+                    required
+                >
+            </p>
+
+            <p>
+                <label for="studentMajor">专业：</label>
+                <input
+                    type="text"
+                    id="studentMajor"
+                    name="major"
+                    placeholder="请输入专业"
+                    required
+                >
+            </p>
+
+            <p>
+                <label for="studentGrade">年级：</label>
+                <input
+                    type="text"
+                    id="studentGrade"
+                    name="grade"
+                    placeholder="例如：大一"
+                    required
+                >
+            </p>
+
+            <p>
+                <button type="submit">提交录入</button>
+                <a href="/web/index.html">
+                    <button type="button">返回首页</button>
+                </a>
+            </p>
+        </form>
+
+        <p id="addResult"></p>
+    </center>
+
+    <script>
+        document.getElementById("studentForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const data = {
+                name: document.getElementById("studentName").value.trim(),
+                major: document.getElementById("studentMajor").value.trim(),
+                grade: document.getElementById("studentGrade").value.trim()
+            };
+
+            const resultBox = document.getElementById("addResult");
+            resultBox.textContent = "正在录入，请稍候……";
+
+            try {
+                const response = await fetch("/student", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                resultBox.textContent =
+                    result.message || (response.ok ? "录入成功！" : "录入失败！");
+
+                if (response.ok) {
+                    document.getElementById("studentForm").reset();
+                }
+            } catch (error) {
+                resultBox.textContent = "连接失败，请检查 Flask 后端是否正在运行。";
+            }
+        });
+    </script>
+</body>
+</html>
