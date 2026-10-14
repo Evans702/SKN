@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>校园知识网络</title>
+</head>
+<body>
+    <center>
+        <h1>校园知识网络</h1>
+        <a href="index.html">返回首页</a>
+        <hr>
+
+        <h2>学生信息查询</h2>
+        <input id="queryName" placeholder="输入学生姓名">
+        <button id="btn3">查询学生</button>
+        <div id="queryResult"></div>
+
+        <hr>
+        <h2>知识网络查询</h2>
+        <button id="networkBtn">查询知识网络</button>
+        <div id="networkResult"></div>
+        <div id="networkGraph" style="height:500px; border:1px solid #ccc;"></div>
+
+        <hr>
+        <h2>学生加入团队</h2>
+        <input id="joinStudent" placeholder="学生姓名">
+        <input id="joinTeam" placeholder="团队名称">
+        <button id="joinTeamBtn">加入团队</button>
+        <div id="joinResult"></div>
+
+        <hr>
+        <h2>团队报名竞赛</h2>
+        <input id="registerTeam" placeholder="团队名称">
+        <input id="registerCompetition" placeholder="竞赛名称">
+        <button id="registerBtn">报名竞赛</button>
+        <div id="registerResult"></div>
+    </center>
+
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
