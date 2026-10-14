@@ -1,0 +1,303 @@
+async function sendRequest(url, data) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        throw new Error(result.message || "操作失败");
+    }
+
+    return result;
+}
+
+function showMessage(id, message) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = message;
+    }
+}
+
+
+// =========================
+// 学生信息录入：page2.html
+// 只录入姓名、专业、年级
+// =========================
+
+const studentForm = document.getElementById("studentForm");
+
+if (studentForm) {
+    studentForm.onsubmit = async function (event) {
+        event.preventDefault();
+
+        const name = document.getElementById("studentName").value.trim();
+        const major = document.getElementById("studentMajor").value.trim();
+        const grade = document.getElementById("studentGrade").value.trim();
+
+        if (!name || !major || !grade) {
+            alert("请填写姓名、专业和年级！");
+            return;
+        }
+
+        try {
+            const result = await sendRequest("/student", {
+                name: name,
+                major: major,
+                grade: grade
+            });
+
+            showMessage("addResult", result.message || "学生信息录入成功！");
+            studentForm.reset();
+        } catch (error) {
+            showMessage("addResult", "录入失败：" + error.message);
+        }
+    };
+}
+
+
+// =========================
+// 学生信息查询：page1.html
+// =========================
+
+const btn3 = document.getElementById("btn3");
+
+if (btn3) {
+    btn3.onclick = async function () {
+        const name = document.getElementById("queryName").value.trim();
+
+        if (!name) {
+            alert("请输入学生姓名！");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                "/student/" + encodeURIComponent(name)
+            );
+            const data = await response.json();
+
+            if (!response.ok) {
+                showMessage("queryResult", data.message || "查询失败");
+                return;
+            }
+
+            showMessage(
+                "queryResult",
+                `姓名：${data.name}；专业：${data.major || "暂无"}；` +
+                `年级：${data.grade || "暂无"}`
+            );
+        } catch (error) {
+            alert("查询失败：" + error.message);
+        }
+    };
+}
+
+
+// =========================
+// 查询学生知识网络
+// =========================
+
+
+const RELATIONSHIP_LABELS = {
+    TEAM_MEMBER_OF: "加入团队",
+    MEMBER_OF: "成员",
+    INTERESTED_IN: "兴趣方向",
+    ENROLLED_IN: "已报名",
+    ATTENDS: "参加",
+    REGISTERS_FOR: "报名竞赛",
+    STUDIED_IN: "学习于",
+    LEARNS: "学习",
+    TAUGHT_BY: "由…教授",
+    IN: "属于",
+    KNOWS: "认识",
+    FOLLOWS: "关注",
+    WORKS_WITH: "合作",
+    CREATED: "创建",
+    OFFERS: "提供"
+};
+
+function translateRelationship(relationship) {
+    if (!relationship) {
+        return "关系";
+    }
+    return RELATIONSHIP_LABELS[relationship] || relationship;
+}
+
+function renderNetwork(data) {
+    const container = document.getElementById("networkGraph");
+    if (!container) {
+        return;
+    }
+
+    if (data.message) {
+        showMessage("networkResult", data.message);
+        return;
+    }
+
+    const nodes = new vis.DataSet((data.nodes || []).map(node => ({
+        ...node,
+        font: { color: "#000000" }
+    })));
+
+    const edges = new vis.DataSet((data.edges || []).map(edge => ({
+        ...edge,
+        label: translateRelationship(edge.label),
+        font: { align: "middle", color: "#000000", size: 12 }
+    })));
+
+    new vis.Network(container, { nodes, edges }, {
+        physics: {
+            enabled: true,
+            stabilization: { iterations: 200 }
+        },
+        edges: {
+            smooth: { type: "dynamic" },
+            arrows: { to: { enabled: true } },
+            font: { align: "middle" }
+        },
+        nodes: {
+            shape: "dot",
+            size: 25,
+            font: { color: "#000000" }
+        },
+        interaction: {
+            hover: true,
+            tooltipDelay: 100
+        }
+    });
+
+    showMessage("networkResult", "已展示关系网络图");
+}
+
+async function loadStudentNetwork() {
+    const name = document.getElementById("queryName").value.trim();
+
+    if (!name) {
+        alert("请先输入学生姓名！");
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            "/student/" + encodeURIComponent(name) + "/network"
+        );
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage("networkResult", data.message || "查询失败");
+            return;
+        }
+
+        if (!data.nodes || !data.edges) {
+            showMessage("networkResult", data.message || "暂无关联数据");
+            return;
+        }
+
+        renderNetwork(data);
+    } catch (error) {
+        showMessage("networkResult", "查询失败：" + error.message);
+    }
+}
+
+const networkBtn = document.getElementById("networkBtn");
+
+if (networkBtn) {
+    networkBtn.onclick = loadStudentNetwork;
+}
+
+
+// =========================
+// 业务动作一：学生加入团队
+// =========================
+
+const joinTeamBtn = document.getElementById("joinTeamBtn");
+
+if (joinTeamBtn) {
+    joinTeamBtn.onclick = async function () {
+        const student = document.getElementById("joinStudent").value.trim();
+        const team = document.getElementById("joinTeam").value.trim();
+
+        if (!student || !team) {
+            alert("请填写学生姓名和团队名称！");
+            return;
+        }
+
+        try {
+            const result = await sendRequest("/team/join", {
+                student: student,
+                team: team
+            });
+
+            showMessage("joinResult", result.message || "操作成功");
+        } catch (error) {
+            showMessage("joinResult", "操作失败：" + error.message);
+        }
+    };
+}
+
+
+// =========================
+// 业务动作二：团队报名竞赛
+// =========================
+
+
+const registerBtn = document.getElementById("registerBtn");
+
+if (registerBtn) {
+    registerBtn.onclick = async function () {
+        const team = document.getElementById("registerTeam").value.trim();
+        const competition = document
+            .getElementById("registerCompetition").value.trim();
+
+        if (!team || !competition) {
+            alert("请填写团队名称和竞赛名称！");
+            return;
+        }
+
+        try {
+            const result = await sendRequest("/team/register", {
+                team: team,
+                competition: competition
+            });
+
+            showMessage(
+                "registerResult",
+                result.message || "报名成功！"
+            );
+        } catch (error) {
+            showMessage(
+                "registerResult",
+                "报名失败：" + error.message
+            );
+        }
+    };
+}
+
+function renderNetwork(data) {
+    const nodes = new vis.DataSet(data.nodes);
+    const edges = new vis.DataSet(data.edges);
+
+    const container = document.getElementById("networkGraph");
+    const network = new vis.Network(container, {
+        nodes: nodes,
+        edges: edges
+    }, {
+        physics: {
+            enabled: true
+        },
+        interaction: {
+            hover: true
+        },
+        edges: {
+            smooth: {
+                type: "dynamic"
+            },
+            arrows: {
+                to: { enabled: true }
+            }
+        }
+    });
+}
