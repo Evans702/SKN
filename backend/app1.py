@@ -5,9 +5,9 @@ from pathlib import Path
 app = Flask(__name__)
 
 #  Neo4j 实例的连接信息
-URI = "bolt://52.23.232.187:7687"
+URI = ""
 USERNAME = "neo4j"
-PASSWORD = "history-algorithm-passengers"
+PASSWORD = ""
 
 driver = GraphDatabase.driver(
     URI,
